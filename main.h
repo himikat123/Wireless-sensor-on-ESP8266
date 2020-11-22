@@ -62,6 +62,11 @@ struct config_struct{
   float         pi_cor;
   float         hi_cor;
   float         te_cor;
+  uint8_t       t_unt;
+  uint8_t       p_unt;
+  uint8_t       ti_unt;
+  uint8_t       pi_unt;
+  uint8_t       te_unt;
 };
 config_struct config;
 

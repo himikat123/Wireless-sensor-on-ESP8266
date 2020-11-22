@@ -197,20 +197,74 @@ void web_settings(void){
     webServer.send(200, "text/plain", "ok");
   });
 
+  webServer.on("/esp/t_units.php", HTTP_POST, [](){
+    config.t_unt = round(webServer.arg("UNT").toFloat());
+    webServer.send(200, "text/plain", "ok");
+  });
+
+  webServer.on("/esp/p_units.php", HTTP_POST, [](){
+    config.p_unt = round(webServer.arg("UNT").toFloat());
+    webServer.send(200, "text/plain", "ok");
+  });
+
+  webServer.on("/esp/ti_units.php", HTTP_POST, [](){
+    config.ti_unt = round(webServer.arg("UNT").toFloat());
+    webServer.send(200, "text/plain", "ok");
+  });
+
+  webServer.on("/esp/pi_units.php", HTTP_POST, [](){
+    config.pi_unt = round(webServer.arg("UNT").toFloat());
+    webServer.send(200, "text/plain", "ok");
+  });
+
+  webServer.on("/esp/te_units.php", HTTP_POST, [](){
+    config.te_unt = round(webServer.arg("UNT").toFloat());
+    webServer.send(200, "text/plain", "ok");
+  });
+
   webServer.on("/esp/adc.php", HTTP_POST, [](){
     String json = "{\"u\":\""; json += analogRead(A0); json += "\"}";
     webServer.send(200, "text/plain", json);
   });
 
   webServer.on("/esp/data.php", HTTP_POST, [](){
-    float t = get_temp(0) + config.t_cor;
-    float p = get_pres(0) + config.p_cor;
-    float h = get_hum(0) + config.h_cor;
-    float ti = get_temp(1) + config.ti_cor;
-    float pi = get_pres(1) + config.pi_cor;
-    float hi = get_hum(1) + config.hi_cor;
-    float te = get_temp(2) + config.te_cor;
-    float l = get_light() + config.l_cor;
+    float t = get_temp(0);
+    if(t != 404.0){
+      if(config.t_unt == 0) t += config.t_cor;
+      else t = t * 1.8 + 32 + config.t_cor;
+    }
+    float ti = get_temp(1);
+    if(ti != 404.0){
+      if(config.ti_unt == 0) ti += config.ti_cor;
+      else ti = ti * 1.8 + 32 + config.ti_cor;
+    }
+    float te = get_temp(2);
+    if(te != 404.0){
+      if(config.te_unt == 0) te += config.te_cor;
+      else te = te * 1.8 + 32 + config.te_cor;
+    }
+    float p = get_pres(0);
+    if(p != 4040.0){
+      if(config.p_unt == 0) p += config.p_cor;
+      else p = p * 0.75 + config.p_cor;
+    }
+    float pi = get_pres(1);
+    if(pi != 4040.0){
+      if(config.pi_unt == 0) pi += config.pi_cor;
+      else pi = pi * 0.75 + config.pi_cor;
+    }
+    float h = get_hum(0);
+    if(h != 404.0){
+      h += config.h_cor;
+    }
+    float hi = get_hum(1);
+    if(hi != 404.0){
+       hi += config.hi_cor;
+    }
+    float l = get_light();
+    if(l >= 0.0){
+      l += config.l_cor;
+    }
     String json = "{\"t\":\""; json += (t == 404.0) ? "--" : String(t); json += "\",";
     json += "\"h\":\""; json += (h == 404.0) ? "--" : String(h); json += "\",";
     json += "\"p\":\""; json += (p == 4040.0) ? "--" : String(p); json += "\",";
@@ -259,14 +313,43 @@ void web_settings(void){
 
   webServer.on("/esp/status.php", HTTP_POST, [](){
     BatteryLevel();
-    float t = get_temp(0) + config.t_cor;
-    float p = get_pres(0) + config.p_cor;
-    float h = get_hum(0) + config.h_cor;
-    float ti = get_temp(1) + config.ti_cor;
-    float pi = get_pres(1) + config.pi_cor;
-    float hi = get_hum(1) + config.hi_cor;
-    float te = get_temp(2) + config.te_cor;
-    float l = get_light() + config.l_cor;
+    float t = get_temp(0);
+    if(t != 404.0){
+      if(config.t_unt == 0) t += config.t_cor;
+      else t = t * 1.8 + 32 + config.t_cor;
+    }
+    float ti = get_temp(1);
+    if(ti != 404.0){
+      if(config.ti_unt == 0) ti += config.ti_cor;
+      else ti = ti * 1.8 + 32 + config.ti_cor;
+    }
+    float te = get_temp(2);
+    if(te != 404.0){
+      if(config.te_unt == 0) te += config.te_cor;
+      else te = te * 1.8 + 32 + config.te_cor;
+    }
+    float p = get_pres(0);
+    if(p != 4040.0){
+      if(config.p_unt == 0) p += config.p_cor;
+      else p = p * 0.75 + config.p_cor;
+    }
+    float pi = get_pres(1);
+    if(pi != 4040.0){
+      if(config.pi_unt == 0) pi += config.pi_cor;
+      else pi = pi * 0.75 + config.pi_cor;
+    }
+    float h = get_hum(0);
+    if(h != 404.0){
+      h += config.h_cor;
+    }
+    float hi = get_hum(1);
+    if(hi != 404.0){
+       hi += config.hi_cor;
+    }
+    float l = get_light();
+    if(l >= 0.0){
+      l += config.l_cor;
+    }
     float cor = -config.k;
     cor = cor + 400;
     String json = "{\"fw\":\""; json += "v" + fw;                        json += "\",";
@@ -275,7 +358,9 @@ void web_settings(void){
     json += "\"sig\":\"";       json += WiFi.RSSI();                     json += "dB\",";
     json += "\"mac\":\"";       json += WiFi.macAddress();               json += "\",";
     json += "\"ip\":\"";        json += WiFi.localIP().toString();       json += "\",";
-    json += "\"temp\":\"";      json += (t == 404.0) ? "--" : String(t); json += "\",";
+    json += "\"temp\":\""; json += (t == 404.0) ? "--" : String(t); 
+    if(t != 404.0) json += config.t_unt == 0 ? "°C" : "°F"; 
+    json += "\",";
     json += "\"t\":\"";
     switch(config.temp[0]){
       case 0: json += "\","; break;
@@ -289,7 +374,9 @@ void web_settings(void){
       case 8: json += "SHT21\","; break;
       default: json += "\","; break;
     }
-    json += "\"pres\":\""; json += (p == 4040.0) ? "--" : String(p); json += "\",";
+    json += "\"pres\":\""; json += (p == 4040.0) ? "--" : String(p); 
+    if(p != 4040.0) json += config.p_unt == 0 ? "hPa" : "mmHg"; 
+    json += "\",";
     json += "\"p\":\"";
     switch(config.pres[0]){
       case 0: json += "\","; break;
@@ -298,7 +385,7 @@ void web_settings(void){
       case 3: json += "BMP180\","; break;
       default: json += "\","; break;
     }
-    json += "\"hum\":\""; json += (h == 404.0) ? "--" : String(h); json += "\","; 
+    json += "\"hum\":\""; json += (h == 404.0) ? "--" : String(h) + "%"; json += "\","; 
     json += "\"h\":\"";
     switch(config.hum[0]){
       case 0: json += "\","; break;
@@ -308,7 +395,7 @@ void web_settings(void){
       case 4: json += "SHT21\","; break;
       default: json += "\","; break;
     }
-    json += "\"ligh\":\""; json += (l < 0.0) ? "--" : String(l); json += "\","; 
+    json += "\"ligh\":\""; json += (l < 0.0) ? "--" : String(l) + "Lux"; json += "\","; 
     json += "\"l\":\"";
     switch(config.light){
       case 0: json += "\","; break;
@@ -316,7 +403,9 @@ void web_settings(void){
       case 2: json += "BH1750FVI\","; break;
       default: json += "\","; break;
     }
-    json += "\"tempi\":\""; json += (ti == 404.0) ? "--" : String(ti); json += "\",";
+    json += "\"tempi\":\""; json += (ti == 404.0) ? "--" : String(ti);
+    if(ti != 404.0) json += config.ti_unt == 0 ? "°C" : "°F"; 
+    json += "\",";
     json += "\"ti\":\"";
     switch(config.temp[1]){
       case 0: json += "\","; break;
@@ -330,7 +419,9 @@ void web_settings(void){
       case 8: json += "SHT21\","; break;
       default: json += "\","; break;
     }
-    json += "\"presi\":\""; json += (pi == 4040.0) ? "--" : String(pi); json += "\",";
+    json += "\"presi\":\""; json += (pi == 4040.0) ? "--" : String(pi);
+    if(pi != 4040.0) json += config.pi_unt == 0 ? "hPa" : "mmHg"; 
+    json += "\",";
     json += "\"pi\":\"";
     switch(config.pres[1]){
       case 0: json += "\","; break;
@@ -339,7 +430,7 @@ void web_settings(void){
       case 3: json += "BMP180\","; break;
       default: json += "\","; break;
     }
-    json += "\"humi\":\""; json += (hi == 404.0) ? "--" : String(hi); json += "\","; 
+    json += "\"humi\":\""; json += (hi == 404.0) ? "--" : String(hi) + "%"; json += "\","; 
     json += "\"hi\":\"";
     switch(config.hum[1]){
       case 0: json += "\","; break;
@@ -349,7 +440,9 @@ void web_settings(void){
       case 4: json += "SHT21\","; break;
       default: json += "\","; break;
     }
-    json += "\"tempe\":\""; json += (te == 404.0) ? "--" : String(te); json += "\","; 
+    json += "\"tempe\":\""; json += (te == 404.0) ? "--" : String(te); 
+    if(te != 404.0) json += config.te_unt == 0 ? "°C" : "°F"; 
+    json += "\",";
     json += "\"te\":\"";
     switch(config.temp[2]){
       case 0: json += "\","; break;

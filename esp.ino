@@ -116,14 +116,43 @@ void loop(){
 
 void sending(){
   BatteryLevel();
-  sensors.temp_out   = get_temp(0) + config.t_cor;
-  sensors.temp_in    = get_temp(1) + config.ti_cor;
-  sensors.temp_extra = get_temp(2) + config.te_cor;
-  sensors.pres_out   = get_pres(0) + config.p_cor;
-  sensors.pres_in    = get_pres(1) + config.pi_cor;
-  sensors.hum_out    = get_hum(0) + config.h_cor;
-  sensors.hum_in     = get_hum(1) + config.hi_cor;
-  sensors.light      = get_light() + config.l_cor;
+  sensors.temp_out = get_temp(0);
+  if(sensors.temp_out != 404.0){
+    if(config.t_unt == 0) sensors.temp_out += config.t_cor;
+    else sensors.temp_out = sensors.temp_out * 1.8 + 32 + config.t_cor;
+  }
+  sensors.temp_in = get_temp(1);
+  if(sensors.temp_in != 404.0){
+    if(config.ti_unt == 0) sensors.temp_in += config.ti_cor;
+    else sensors.temp_in = sensors.temp_in * 1.8 + 32 + config.ti_cor;
+  }
+  sensors.temp_extra = get_temp(2);
+  if(sensors.temp_extra != 404.0){
+    if(config.te_unt == 0) sensors.temp_extra += config.te_cor;
+    else sensors.temp_extra = sensors.temp_extra * 1.8 + 32 + config.te_cor;
+  }
+  sensors.pres_out = get_pres(0);
+  if(sensors.pres_out != 4040.0){
+    if(config.p_unt == 0) sensors.pres_out += config.p_cor;
+    else sensors.pres_out = sensors.pres_out * 0.75 + config.p_cor;
+  }
+  sensors.pres_in = get_pres(1);
+  if(sensors.pres_in != 4040.0){
+    if(config.pi_unt == 0) sensors.pres_in += config.pi_cor;
+    else sensors.pres_in = sensors.pres_in * 0.75 + config.pi_cor;
+  }
+  sensors.hum_out = get_hum(0);
+  if(sensors.hum_out != 404.0){
+    sensors.hum_out += config.h_cor;
+  }
+  sensors.hum_in = get_hum(1);
+  if(sensors.hum_in != 404.0){
+     sensors.hum_in += config.hi_cor;
+  }
+  sensors.light = get_light();
+  if(sensors.light >= 0.0){
+    sensors.light += config.l_cor;
+  }
   if(WiFi.status() == WL_CONNECTED){
     led(0, 0, 1);
     if(config.narod) sendToNarodmon();
@@ -416,10 +445,15 @@ void read_eeprom(void){
       config.p_cor      = root["P_COR"];
       config.h_cor      = root["H_COR"];
       config.l_cor      = root["L_COR"];
-      config.ti_cor      = root["TI_COR"];
-      config.pi_cor      = root["PI_COR"];
-      config.hi_cor      = root["HI_COR"];
-      config.te_cor      = root["TE_COR"];
+      config.ti_cor     = root["TI_COR"];
+      config.pi_cor     = root["PI_COR"];
+      config.hi_cor     = root["HI_COR"];
+      config.te_cor     = root["TE_COR"];
+      config.t_unt      = root["T_UNT"];
+      config.p_unt      = root["P_UNT"];
+      config.ti_unt     = root["TI_UNT"];
+      config.pi_unt     = root["PI_UNT"];
+      config.te_unt     = root["TE_UNT"];
       config.ip         = ip;
       config.mask       = mask;
       config.gateway    = gw;
