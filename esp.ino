@@ -1,5 +1,5 @@
-/* Wireless Sensor BIM (esp part) v3.0
-   © himikat123@gmail.com, Nürnberg, Deutschland, 2020
+/* Wireless Sensor BIM v3.1
+   © himikat123@gmail.com, Nürnberg, Deutschland, 2017 - 2021
 */
                                // Board: Generic ESP8266 Module 
                                // 1MB (256kB SPIFFS)
@@ -99,13 +99,25 @@ void snd(){
   sending_flag = true;
 }
 
+void sensors_sleep(void){
+  if(sensors.bmp180Detected) bmp.begin(BMP085_ULTRALOWPOWER);
+  if(sensors.bme1Detected or sensors.bmp1Detected){
+    bme1.parameter.sensorMode = 0b00;
+    bme1.init();
+  }
+  if(sensors.bme2Detected or sensors.bmp2Detected){
+    bme2.parameter.sensorMode = 0b00;
+    bme2.init();
+  }
+}
+
 void loop(){
   if(sending_flag){
     sending_flag = false;
     Serial.println("sending");
     sending();
     if(!config.ac){
-      if(sensors.bmp180Detected) bmp.begin(BMP085_ULTRALOWPOWER);
+      sensors_sleep();
       ESP.deepSleep(config.period * 60000000);
     }
   }
@@ -154,7 +166,7 @@ void sending(){
     sensors.light += config.l_cor;
   }
   if(WiFi.status() == WL_CONNECTED){
-    led(0, 0, 1);
+    led(0, 1, 1);
     if(config.narod) sendToNarodmon();
     if(config.thingspeak) sendToThingSpeak();
     if(config.mqtt){
@@ -177,7 +189,7 @@ void sending(){
     is_settings();
     Serial.println("going sleep");
     led(0, 0, 0);
-    if(sensors.bmp180Detected) bmp.begin(BMP085_ULTRALOWPOWER);
+    sensors_sleep();
     ESP.deepSleep(300000000);
   }
 }
@@ -337,7 +349,7 @@ void connectToWiFi(void){
           Serial.println("Going sleep");
           is_settings();
           led(0, 0, 0);
-          if(sensors.bmp180Detected) bmp.begin(BMP085_ULTRALOWPOWER);
+          sensors_sleep();
           ESP.deepSleep(120000000);
         }
         if(e&1)led(1, 1, 0);
@@ -528,8 +540,8 @@ void BatteryLevel(void){
   sensors.bat_level = 1;
   if(!config.ac and sensors.uBat < 3.3){
     led(0, 0, 0);
-    if(sensors.bmp180Detected) bmp.begin(BMP085_ULTRALOWPOWER);
-    ESP.deepSleep(999999999*999999999U,WAKE_NO_RFCAL);
+    sensors_sleep();
+    ESP.deepSleep(999999999*999999999U, WAKE_NO_RFCAL);
   }
   if(sensors.uBat >= 3.3 and sensors.uBat < 3.5) sensors.bat_level = 1;
   if(sensors.uBat >= 3.5 and sensors.uBat < 3.7) sensors.bat_level = 2;
@@ -561,9 +573,7 @@ void sensors_init(void){
   bme1.parameter.pressureSeaLevel = 1013.25;
   bme2.parameter.pressureSeaLevel = 1013.25;
   bme1.parameter.tempOutsideCelsius = 15;
-  bme2.parameter.tempOutsideCelsius = 15;
-  bme1.parameter.tempOutsideFahrenheit = 59;
-  bme2.parameter.tempOutsideFahrenheit = 59;
+  bme2.parameter.tempOutsideCelsius = 15;  
   int b1 = bme1.init();
   int b2 = bme2.init();
   if(b1 == 0x58) sensors.bmp1Detected = true;
@@ -601,7 +611,7 @@ void sensors_init(void){
     //MAX44009
   if(!max_light.begin()) sensors.max44Detected = true;
     //BH1750
-  if(lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE)) sensors.bhDetected = true;
+  if(lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE)) sensors.bhDetected = true;
 }
 
 float get_temp(uint8_t s){

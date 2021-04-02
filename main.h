@@ -1,4 +1,4 @@
-String fw = "3.0";
+String fw = "3.1";
 char ssid[32] = "";
 char password[32] = "";
 String url;
